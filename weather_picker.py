@@ -45,7 +45,7 @@ from qgis.PyQt.QtNetwork import QNetworkRequest
 # =============================================================================
 # Qt5 / Qt6 Enum-Kompatibilität (QGIS 3 & QGIS 4)
 # =============================================================================
-if not hasattr(QtGui.QImage, "Format_ARGB32"):
+if not hasattr(QtGui.QImage, "Format_ARGB32") or not hasattr(Qt, "AlignCenter"):
     # QImage
     QtGui.QImage.Format_ARGB32        = QtGui.QImage.Format.Format_ARGB32
     # QPainter
