@@ -1,7 +1,17 @@
-"""
-Weather Picker - QGIS-Plugin
-============================
+# -----------------------------------------------------------------------------#
+# Title:       Weather Picker - QGIS-Plugin                                    #
+# Author:      Thomas Wölk, Mike Elstermann (#geoObserver)                     #
+# Version:     v0.5.2                                                          #
+# Created:     08.06.2026                                                      #
+# Last Change: 13.07.2026                                                      #
+# see also:    https://geoobserver.de/qgis-plugins/                            #
+#                                                                              #
+# This file contains code generated with assistance from an AI                 #
+# No warranty is provided for AI-generated portions.                           #
+# Human review and modification performed by: Mike Elstermann (#geoObserver)   #
+# -----------------------------------------------------------------------------#
 
+"""
 Auf die Karte klicken und Wetterdaten inkl. 7-Tage-Vorschau (Open-Meteo)
 als Diagramm anzeigen.
 
@@ -47,31 +57,35 @@ from qgis.PyQt.QtNetwork import QNetworkRequest
 # =============================================================================
 if not hasattr(QtGui.QImage, "Format_ARGB32"):
     # QImage
-    QtGui.QImage.Format_ARGB32        = QtGui.QImage.Format.Format_ARGB32
+    QtGui.QImage.Format_ARGB32 = QtGui.QImage.Format.Format_ARGB32
     # QPainter
-    QtGui.QPainter.Antialiasing       = QtGui.QPainter.RenderHint.Antialiasing
-    QtGui.QPainter.TextAntialiasing   = QtGui.QPainter.RenderHint.TextAntialiasing
+    QtGui.QPainter.Antialiasing = QtGui.QPainter.RenderHint.Antialiasing
+    QtGui.QPainter.TextAntialiasing = (
+        QtGui.QPainter.RenderHint.TextAntialiasing
+    )
     # QFont
-    QtGui.QFont.Bold                  = QtGui.QFont.Weight.Bold
-    QtGui.QFont.Normal                = QtGui.QFont.Weight.Normal
+    QtGui.QFont.Bold = QtGui.QFont.Weight.Bold
+    QtGui.QFont.Normal = QtGui.QFont.Weight.Normal
     # Qt Alignment
-    QtCore.Qt.AlignLeft               = QtCore.Qt.AlignmentFlag.AlignLeft
-    QtCore.Qt.AlignRight              = QtCore.Qt.AlignmentFlag.AlignRight
-    QtCore.Qt.AlignCenter             = QtCore.Qt.AlignmentFlag.AlignCenter
-    QtCore.Qt.AlignVCenter            = QtCore.Qt.AlignmentFlag.AlignVCenter
-    QtCore.Qt.AlignHCenter            = QtCore.Qt.AlignmentFlag.AlignHCenter
+    QtCore.Qt.AlignLeft = QtCore.Qt.AlignmentFlag.AlignLeft
+    QtCore.Qt.AlignRight = QtCore.Qt.AlignmentFlag.AlignRight
+    QtCore.Qt.AlignCenter = QtCore.Qt.AlignmentFlag.AlignCenter
+    QtCore.Qt.AlignVCenter = QtCore.Qt.AlignmentFlag.AlignVCenter
+    QtCore.Qt.AlignHCenter = QtCore.Qt.AlignmentFlag.AlignHCenter
     # Qt PenStyle
-    QtCore.Qt.DashLine                = QtCore.Qt.PenStyle.DashLine
-    QtCore.Qt.SolidLine               = QtCore.Qt.PenStyle.SolidLine
+    QtCore.Qt.DashLine = QtCore.Qt.PenStyle.DashLine
+    QtCore.Qt.SolidLine = QtCore.Qt.PenStyle.SolidLine
     # Qt Pen cap/join (für die geglättete Kurve)
-    QtCore.Qt.RoundCap                = QtCore.Qt.PenCapStyle.RoundCap
-    QtCore.Qt.RoundJoin               = QtCore.Qt.PenJoinStyle.RoundJoin
+    QtCore.Qt.RoundCap = QtCore.Qt.PenCapStyle.RoundCap
+    QtCore.Qt.RoundJoin = QtCore.Qt.PenJoinStyle.RoundJoin
     # Qt TransformationMode
-    QtCore.Qt.SmoothTransformation    = QtCore.Qt.TransformationMode.SmoothTransformation
+    QtCore.Qt.SmoothTransformation = (
+        QtCore.Qt.TransformationMode.SmoothTransformation
+    )
     # Qt MouseButton
-    QtCore.Qt.LeftButton              = QtCore.Qt.MouseButton.LeftButton
+    QtCore.Qt.LeftButton = QtCore.Qt.MouseButton.LeftButton
     # Qt CursorShape
-    QtCore.Qt.WaitCursor              = QtCore.Qt.CursorShape.WaitCursor
+    QtCore.Qt.WaitCursor = QtCore.Qt.CursorShape.WaitCursor
 
 
 # Einheitlicher Log-Tag → im QGIS-Log-Panel als eigener Reiter filterbar.
@@ -84,68 +98,68 @@ LOG_TAG = "Weather Picker"
 # =============================================================================
 TR = {
     "de": {
-        "action_tooltip":  "Weather Picker – Auf Karte klicken für Wetterdaten",
-        "icon_missing":    "Icon nicht gefunden: {path} – Ausweich-Icon wird verwendet.",
-        "click_hint":      "Auf die Karte klicken – Wetterdaten & 7-Tage-Vorschau als Diagramm",
-        "err_timeout":     "Zeitüberschreitung (15 s) beim Abruf der Wetterdaten – "
-                           "Netzwerk oder Proxy nicht erreichbar?",
-        "err_network":     "Netzwerkfehler beim Abruf der Wetterdaten: {msg}",
-        "err_format":      "Unerwartetes Antwortformat der Open-Meteo-API.",
-        "err_inconsistent":"Inkonsistente Wetterdaten von der API erhalten.",
-        "err_nodata":      "Keine gültigen Wetterdaten für diese Position verfügbar.",
-        "err_crs":         "Ungültiges Koordinatensystem – Transformation nicht möglich.",
-        "chart_title":     "Wetterdaten & 7-Tage-Vorschau",
-        "coords":          "Breite {lat}, Länge {lon}",
-        "coords_near":     "Breite {lat}, Länge {lon} – in der Nähe von {place}",
-        "now":             "jetzt",
-        "temp_axis":       "Temperatur (°C)",
-        "rain_axis":       "Regen (mm)",
-        "legend_temp":     "Temperatur",
-        "legend_rain":     "Regen",
-        "source":          '<a href="https://open-meteo.com">Wetterdaten/Vorhersage: '
-                           'Open-Meteo</a> – Lizenz '
-                           '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
-        "source_osm":      'Ortsname: © <a href="https://www.openstreetmap.org/copyright">'
-                           'OpenStreetMap</a>-Mitwirkende '
-                           '(<a href="https://nominatim.openstreetmap.org/">Nominatim</a>)',
-        "log_release":     "canvasReleaseEvent ausgelöst",
-        "log_coords":      "Koordinaten (gerundet): lat={lat}, lon={lon}",
-        "log_received":    "Wetterdaten empfangen: {n} Einträge",
-        "log_place":       "Nächster Ort (Nominatim): {place}",
+        "action_tooltip": "Weather Picker – Auf Karte klicken für Wetterdaten",
+        "icon_missing": "Icon nicht gefunden: {path} – Ausweich-Icon wird verwendet.",
+        "click_hint": "Auf die Karte klicken – Wetterdaten & 7-Tage-Vorschau als Diagramm",
+        "err_timeout": "Zeitüberschreitung (15 s) beim Abruf der Wetterdaten – "
+        "Netzwerk oder Proxy nicht erreichbar?",
+        "err_network": "Netzwerkfehler beim Abruf der Wetterdaten: {msg}",
+        "err_format": "Unerwartetes Antwortformat der Open-Meteo-API.",
+        "err_inconsistent": "Inkonsistente Wetterdaten von der API erhalten.",
+        "err_nodata": "Keine gültigen Wetterdaten für diese Position verfügbar.",
+        "err_crs": "Ungültiges Koordinatensystem – Transformation nicht möglich.",
+        "chart_title": "Wetterdaten & 7-Tage-Vorschau",
+        "coords": "Breite {lat}, Länge {lon}",
+        "coords_near": "Breite {lat}, Länge {lon} – in der Nähe von {place}",
+        "now": "jetzt",
+        "temp_axis": "Temperatur (°C)",
+        "rain_axis": "Regen (mm)",
+        "legend_temp": "Temperatur",
+        "legend_rain": "Regen",
+        "source": '<a href="https://open-meteo.com">Wetterdaten/Vorhersage: '
+        "Open-Meteo</a> – Lizenz "
+        '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
+        "source_osm": 'Ortsname: © <a href="https://www.openstreetmap.org/copyright">'
+        "OpenStreetMap</a>-Mitwirkende "
+        '(<a href="https://nominatim.openstreetmap.org/">Nominatim</a>)',
+        "log_release": "canvasReleaseEvent ausgelöst",
+        "log_coords": "Koordinaten (gerundet): lat={lat}, lon={lon}",
+        "log_received": "Wetterdaten empfangen: {n} Einträge",
+        "log_place": "Nächster Ort (Nominatim): {place}",
         "log_dialog_open": "Dialog wird geöffnet...",
-        "log_dialog_closed":"Dialog geschlossen",
+        "log_dialog_closed": "Dialog geschlossen",
     },
     "en": {
-        "action_tooltip":  "Weather Picker – click the map for weather data",
-        "icon_missing":    "Icon not found: {path} – using fallback icon.",
-        "click_hint":      "Click the map – weather data & 7-day forecast as a chart",
-        "err_timeout":     "Request timed out (15 s) while fetching weather data – "
-                           "network or proxy unreachable?",
-        "err_network":     "Network error while fetching weather data: {msg}",
-        "err_format":      "Unexpected response format from the Open-Meteo API.",
-        "err_inconsistent":"Inconsistent weather data received from the API.",
-        "err_nodata":      "No valid weather data available for this location.",
-        "err_crs":         "Invalid coordinate reference system – transformation not possible.",
-        "chart_title":     "Weather data & 7-day forecast",
-        "coords":          "Lat {lat}, Lon {lon}",
-        "coords_near":     "Lat {lat}, Lon {lon} – near {place}",
-        "now":             "now",
-        "temp_axis":       "Temperature (°C)",
-        "rain_axis":       "Rain (mm)",
-        "legend_temp":     "Temperature",
-        "legend_rain":     "Rain",
-        "source":          '<a href="https://open-meteo.com">Weather data/forecast: '
-                           'Open-Meteo</a> – licensed '
-                           '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
-        "source_osm":      'Place name: © <a href="https://www.openstreetmap.org/copyright">'
-                           'OpenStreetMap</a> contributors '
-                           '(<a href="https://nominatim.openstreetmap.org/">Nominatim</a>)',
-        "log_release":     "canvasReleaseEvent triggered",
-        "log_coords":      "Coordinates (rounded): lat={lat}, lon={lon}",
-        "log_received":    "Weather data received: {n} entries",
-        "log_place":       "Nearest place (Nominatim): {place}",
+        "action_tooltip": "Weather Picker – click the map for weather data",
+        "icon_missing": "Icon not found: {path} – using fallback icon.",
+        "click_hint": "Click the map – weather data & 7-day forecast as a chart",
+        "err_timeout": "Request timed out (15 s) while fetching weather data – "
+        "network or proxy unreachable?",
+        "err_network": "Network error while fetching weather data: {msg}",
+        "err_format": "Unexpected response format from the Open-Meteo API.",
+        "err_inconsistent": "Inconsistent weather data received from the API.",
+        "err_nodata": "No valid weather data available for this location.",
+        "err_crs": "Invalid coordinate reference system – transformation not possible.",
+        "chart_title": "Weather data & 7-day forecast",
+        "coords": "Lat {lat}, Lon {lon}",
+        "coords_near": "Lat {lat}, Lon {lon} – near {place}",
+        "now": "now",
+        "temp_axis": "Temperature (°C)",
+        "rain_axis": "Rain (mm)",
+        "legend_temp": "Temperature",
+        "legend_rain": "Rain",
+        "source": '<a href="https://open-meteo.com">Weather data/forecast: '
+        "Open-Meteo</a> – licensed "
+        '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
+        "source_osm": 'Place name: © <a href="https://www.openstreetmap.org/copyright">'
+        "OpenStreetMap</a> contributors "
+        '(<a href="https://nominatim.openstreetmap.org/">Nominatim</a>)',
+        "log_release": "canvasReleaseEvent triggered",
+        "log_coords": "Coordinates (rounded): lat={lat}, lon={lon}",
+        "log_received": "Weather data received: {n} entries",
+        "log_place": "Nearest place (Nominatim): {place}",
         "log_dialog_open": "Opening dialog...",
-        "log_dialog_closed":"Dialog closed",
+        "log_dialog_closed": "Dialog closed",
     },
 }
 
@@ -198,7 +212,8 @@ def _date_locale(lang: str) -> QLocale:
 def _short_md_format(loc: QLocale) -> str:
     """Aus dem Kurzdatums-Format des Locale die Tag/Monat-Anteile ableiten,
     indem das Jahr (samt angrenzender Trenner) entfernt wird.
-    Bsp.: ``dd.MM.yyyy`` → ``dd.MM`` · ``M/d/yy`` → ``M/d`` · ``dd/MM/yyyy`` → ``dd/MM``."""
+    Bsp.: ``dd.MM.yyyy`` → ``dd.MM`` · ``M/d/yy`` → ``M/d`` · ``dd/MM/yyyy`` → ``dd/MM``.
+    """
     fmt = loc.dateFormat(QLocale.FormatType.ShortFormat)
     fmt = re.sub(r"[^A-Za-z]*y+[^A-Za-z]*", "", fmt).strip(" ./-,")
     return fmt or "MM/dd"
@@ -210,11 +225,13 @@ def _format_date_label(dt: datetime.datetime, lang: str) -> str:
     Wochentagsname folgt der Textsprache; die Tag/Monat-Reihenfolge folgt dem
     Regions-Locale (siehe ``_date_locale``). Beides kommt aus ``QLocale`` –
     keine hart kodierten Namenslisten mehr."""
-    qd       = QDate(dt.year, dt.month, dt.day)
-    lang_loc = _loc(lang)            # Wochentagsname in der Textsprache
-    date_loc = _date_locale(lang)    # Reihenfolge/Monatsname nach Region
+    qd = QDate(dt.year, dt.month, dt.day)
+    lang_loc = _loc(lang)  # Wochentagsname in der Textsprache
+    date_loc = _date_locale(lang)  # Reihenfolge/Monatsname nach Region
     # Trailing-Punkt mancher Locale-Kürzel ("Mo." → "Mo") für ein ruhiges Label entfernen.
-    wd = lang_loc.dayName(qd.dayOfWeek(), QLocale.FormatType.ShortFormat).rstrip(".")
+    wd = lang_loc.dayName(
+        qd.dayOfWeek(), QLocale.FormatType.ShortFormat
+    ).rstrip(".")
     if lang == "de":
         return f"{wd} {qd.toString('dd.MM.')}"
     return f"{wd} {date_loc.toString(qd, _short_md_format(date_loc))}"
@@ -227,7 +244,8 @@ def _log(message: object, level: int = Qgis.Info) -> None:
 
 def _schoener_schritt(spanne: float, anzahl: int) -> float:
     """Liefert einen "schönen" Achsen-Schritt (1/2/5 × Zehnerpotenz) für `anzahl`
-    Intervalle über die gegebene Wertespanne – für lesbare, gerundete Achsen."""
+    Intervalle über die gegebene Wertespanne – für lesbare, gerundete Achsen.
+    """
     if spanne <= 0:
         return 1.0
     roh = spanne / max(anzahl, 1)
@@ -254,10 +272,14 @@ class WeatherPickerPlugin:
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.toolbar = None
-        self._owns_toolbar = False  # nur selbst erzeugte Toolbar darf aufgeräumt werden
+        self._owns_toolbar = (
+            False  # nur selbst erzeugte Toolbar darf aufgeräumt werden
+        )
         self.action = None
         self.actions = []
-        self.tool = None  # erst in activate_tool() belegt; hält das aktive Map-Tool
+        self.tool = (
+            None  # erst in activate_tool() belegt; hält das aktive Map-Tool
+        )
 
     def initGui(self) -> None:
         lang = _current_lang()
@@ -276,7 +298,7 @@ class WeatherPickerPlugin:
 
         # --- Icon laden (logo.png liegt im gleichen Ordner wie dieses Skript) ---
         plugin_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path  = os.path.join(plugin_dir, "logo.png")
+        icon_path = os.path.join(plugin_dir, "logo.png")
 
         if os.path.exists(icon_path):
             icon = QtGui.QIcon(icon_path)
@@ -286,11 +308,13 @@ class WeatherPickerPlugin:
             self.iface.messageBar().pushMessage(
                 "Weather Picker",
                 tr("icon_missing", lang, path=icon_path),
-                level=Qgis.Warning
+                level=Qgis.Warning,
             )
 
         # --- Button / Action anlegen ---
-        self.action = QtWidgets.QAction(icon, "Weather Picker", self.iface.mainWindow())
+        self.action = QtWidgets.QAction(
+            icon, "Weather Picker", self.iface.mainWindow()
+        )
         self.action.setToolTip(tr("action_tooltip", lang))
         self.action.setCheckable(True)
         self.action.triggered.connect(self.activate_tool)
@@ -312,7 +336,7 @@ class WeatherPickerPlugin:
         self.iface.messageBar().pushMessage(
             "Weather Picker",
             tr("click_hint", _current_lang()),
-            level=Qgis.Info
+            level=Qgis.Info,
         )
 
     def unload(self) -> None:
@@ -336,7 +360,11 @@ class WeatherPickerPlugin:
         # Haben wir die Toolbar selbst erzeugt und ist sie jetzt leer, geben wir
         # sie sauber frei (deleteLater statt removeToolBar, um die Verstecken-Falle
         # zu umgehen). Eine fremde/geteilte Toolbar bleibt unangetastet.
-        if self._owns_toolbar and self.toolbar is not None and len(self.toolbar.actions()) == 0:
+        if (
+            self._owns_toolbar and
+            self.toolbar is not None and
+            len(self.toolbar.actions()) == 0
+        ):
             self.iface.mainWindow().removeToolBar(self.toolbar)
             self.toolbar.deleteLater()
         self.toolbar = None
@@ -354,7 +382,9 @@ class WeatherPickerTool(QgsMapTool):
     # hält die Last gering – Nominatim erlaubt max. 1 Anfrage/Sekunde.
     _geocode_cache: dict = {}
 
-    def __init__(self, iface, canvas, action: QtWidgets.QAction | None = None) -> None:
+    def __init__(
+        self, iface, canvas, action: QtWidgets.QAction | None = None
+    ) -> None:
         super().__init__(canvas)
         self.iface = iface
         self.canvas = canvas
@@ -381,7 +411,9 @@ class WeatherPickerTool(QgsMapTool):
         # anfragen: nur so werden die QGIS-/System-Proxy-Einstellungen inkl.
         # Authentifizierung (z. B. NTLM/Kerberos im Firmennetz) berücksichtigt.
         request = QNetworkRequest(QUrl(url))
-        request.setHeader(QNetworkRequest.KnownHeaders.UserAgentHeader, "QGIS-WeatherPicker")
+        request.setHeader(
+            QNetworkRequest.KnownHeaders.UserAgentHeader, "QGIS-WeatherPicker"
+        )
 
         # QgsBlockingNetworkRequest kennt keinen Timeout-Parameter und würde sonst
         # bis zum globalen QGIS-Netzwerk-Timeout (Vorgabe 60 s) blockieren. Über ein
@@ -399,11 +431,15 @@ class WeatherPickerTool(QgsMapTool):
         # Hinweis: Der Aufruf blockiert den UI-Thread (bis zu 15 s). Architektonisch
         # sauber wäre ein QgsTask + Signal/Slot mit Ladeanzeige – das ist aber ein
         # größerer Umbau. Als minimale Rückmeldung wenigstens einen Warte-Cursor zeigen.
-        QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        QtWidgets.QApplication.setOverrideCursor(
+            QtGui.QCursor(QtCore.Qt.WaitCursor)
+        )
         try:
             # forceRefresh=True: keine gecachte Antwort verwenden – Wetterdaten
             # sollen aktuell sein (sonst liefert der QGIS-Cache evtl. alte Werte).
-            err = blocking.get(request, True, feedback)  # request, forceRefresh, feedback
+            err = blocking.get(
+                request, True, feedback
+            )  # request, forceRefresh, feedback
         finally:
             timer.stop()  # nicht mehr benötigt, egal ob Erfolg/Fehler/Timeout
             QtWidgets.QApplication.restoreOverrideCursor()
@@ -413,23 +449,29 @@ class WeatherPickerTool(QgsMapTool):
 
         # HTTP-Fehler (4xx/5xx) liefert get() bereits als ServerExceptionError zurück.
         if err != QgsBlockingNetworkRequest.ErrorCode.NoError:
-            raise RuntimeError(tr("err_network", lang, msg=blocking.errorMessage()))
+            raise RuntimeError(
+                tr("err_network", lang, msg=blocking.errorMessage())
+            )
 
         content = bytes(blocking.reply().content()).decode("utf-8")
 
         # --- Antwort strukturiert prüfen ---------------------------------------
         # json.JSONDecodeError ist eine ValueError-Unterklasse, daher mit abgedeckt.
         try:
-            data   = json.loads(content)
+            data = json.loads(content)
             hourly = data["hourly"]
-            times  = hourly["time"]
-            temp   = hourly["temperature_2m"]
-            rain   = hourly["rain"]
+            times = hourly["time"]
+            temp = hourly["temperature_2m"]
+            rain = hourly["rain"]
         except (ValueError, KeyError, TypeError) as exc:
             raise RuntimeError(tr("err_format", lang)) from exc
 
         # Alle drei Felder müssen Listen sein (nicht nur "times").
-        if not (isinstance(times, list) and isinstance(temp, list) and isinstance(rain, list)):
+        if not (
+            isinstance(times, list) and
+            isinstance(temp, list) and
+            isinstance(rain, list)
+        ):
             raise RuntimeError(tr("err_format", lang))
         if not (len(times) == len(temp) == len(rain)):
             raise RuntimeError(tr("err_inconsistent", lang))
@@ -438,7 +480,9 @@ class WeatherPickerTool(QgsMapTool):
         # sich die lokale "Jetzt"-Zeit am Ort bestimmen, ohne auf die hourly-Indizes
         # angewiesen zu sein (die durch das null-Filtern verschoben sein könnten).
         utc_offset = data.get("utc_offset_seconds", 0)
-        if not isinstance(utc_offset, (int, float)) or isinstance(utc_offset, bool):
+        if not isinstance(utc_offset, (int, float)) or isinstance(
+            utc_offset, bool
+        ):
             utc_offset = 0
 
         # Strikte Wert-Validierung: Open-Meteo liefert in Randlagen (Polarregion,
@@ -451,7 +495,9 @@ class WeatherPickerTool(QgsMapTool):
                 continue
             if isinstance(tp, bool) or isinstance(rn, bool):
                 continue
-            if not isinstance(tp, (int, float)) or not isinstance(rn, (int, float)):
+            if not isinstance(tp, (int, float)) or not isinstance(
+                rn, (int, float)
+            ):
                 continue
             if not (math.isfinite(tp) and math.isfinite(rn)):
                 continue
@@ -476,15 +522,24 @@ class WeatherPickerTool(QgsMapTool):
         if not isinstance(address, dict):
             return None
         for feld in (
-            "city", "town", "village", "hamlet", "municipality",
-            "suburb", "city_district", "county", "state",
+            "city",
+            "town",
+            "village",
+            "hamlet",
+            "municipality",
+            "suburb",
+            "city_district",
+            "county",
+            "state",
         ):
             wert = address.get(feld)
             if isinstance(wert, str) and wert.strip():
                 return wert.strip()
         return None
 
-    def reverse_geocode(self, lat: float, lon: float, lang: str = "de") -> str | None:
+    def reverse_geocode(
+        self, lat: float, lon: float, lang: str = "de"
+    ) -> str | None:
         """Nächstgelegenen Ortsnamen (Stadt/Gemeinde/Ort) via Nominatim ermitteln.
 
         Läuft – wie ``fetch_weather`` – bewusst über den QGIS-Netzwerk-Manager,
@@ -538,18 +593,23 @@ class WeatherPickerTool(QgsMapTool):
         try:
             # forceRefresh=False: Ortsnamen ändern sich praktisch nie, daher darf
             # die QGIS-Cache-Antwort genutzt werden – das entlastet den Dienst.
-            err = blocking.get(request, False, feedback)  # request, forceRefresh, feedback
+            err = blocking.get(
+                request, False, feedback
+            )  # request, forceRefresh, feedback
         finally:
             timer.stop()
 
         # Bei Timeout/Netzfehler nicht cachen, damit ein späterer Versuch (z. B.
         # nach Netzwiederkehr) denselben Punkt erneut anfragen darf.
-        if feedback.isCanceled() or err != QgsBlockingNetworkRequest.ErrorCode.NoError:
+        if (
+            feedback.isCanceled() or
+            err != QgsBlockingNetworkRequest.ErrorCode.NoError
+        ):
             return None
 
         try:
             content = bytes(blocking.reply().content()).decode("utf-8")
-            data    = json.loads(content)
+            data = json.loads(content)
             address = data.get("address", {}) if isinstance(data, dict) else {}
         except (ValueError, TypeError):
             return None
@@ -573,15 +633,17 @@ class WeatherPickerTool(QgsMapTool):
     ) -> QtGui.QImage:
 
         # --- Farbpalette (dezent-modern, aber kontraststark) ---
-        C_INK       = QtGui.QColor("#222222")          # Haupttext
-        C_MUTE      = QtGui.QColor("#6f6f6f")          # Sekundärtext / Datum
-        C_GRID      = QtGui.QColor("#e3e3e3")          # Gitternetz
-        C_AXIS      = QtGui.QColor("#bdbdbd")          # Achsenlinien
-        C_NOW       = QtGui.QColor("#3a3a3a")          # "Jetzt"-Linie
-        C_PAST      = QtGui.QColor(0, 0, 0, 12)        # Schattierung Vergangenheit
-        C_TEMP      = QtGui.QColor("#e4572e")          # Temperatur (warmes Rot-Orange)
-        C_RAIN      = QtGui.QColor(48, 127, 226, 190)  # Regenbalken (kräftiges Blau)
-        C_RAIN_INK  = QtGui.QColor("#1d6fb8")          # Regen-Beschriftung
+        C_INK = QtGui.QColor("#222222")  # Haupttext
+        C_MUTE = QtGui.QColor("#6f6f6f")  # Sekundärtext / Datum
+        C_GRID = QtGui.QColor("#e3e3e3")  # Gitternetz
+        C_AXIS = QtGui.QColor("#bdbdbd")  # Achsenlinien
+        C_NOW = QtGui.QColor("#3a3a3a")  # "Jetzt"-Linie
+        C_PAST = QtGui.QColor(0, 0, 0, 12)  # Schattierung Vergangenheit
+        C_TEMP = QtGui.QColor("#e4572e")  # Temperatur (warmes Rot-Orange)
+        C_RAIN = QtGui.QColor(
+            48, 127, 226, 190
+        )  # Regenbalken (kräftiges Blau)
+        C_RAIN_INK = QtGui.QColor("#1d6fb8")  # Regen-Beschriftung
 
         # Logische Zeichenfläche; physisch wird mit `scale` (Geräte-Pixeldichte)
         # gerendert, damit nichts heruntergerechnet (= unscharf) werden muss.
@@ -605,27 +667,27 @@ class WeatherPickerTool(QgsMapTool):
             painter.setRenderHint(QtGui.QPainter.TextAntialiasing)
 
             # --- Abstände (Ränder) ---
-            margin_left   = 82
-            margin_right  = 82
-            margin_top    = 78
+            margin_left = 82
+            margin_right = 82
+            margin_top = 78
             margin_bottom = 72
 
-            plot_w      = width  - margin_left - margin_right
-            plot_h      = height - margin_top  - margin_bottom
+            plot_w = width - margin_left - margin_right
+            plot_h = height - margin_top - margin_bottom
             plot_bottom = height - margin_bottom
 
             n = len(temp)
 
             # --- Temperaturachse: schön gerundete Grenzen + etwas Luft ---
             t_lo, t_hi = min(temp), max(temp)
-            if t_hi - t_lo < 0.5:          # sehr flache Kurve nicht übermäßig zoomen
+            if t_hi - t_lo < 0.5:  # sehr flache Kurve nicht übermäßig zoomen
                 mid = (t_hi + t_lo) / 2.0
                 t_lo, t_hi = mid - 0.5, mid + 0.5
-            step_t   = _schoener_schritt(t_hi - t_lo, 6)
+            step_t = _schoener_schritt(t_hi - t_lo, 6)
             axis_min = math.floor(t_lo / step_t) * step_t
             axis_max = math.ceil(t_hi / step_t) * step_t
-            n_ticks  = max(1, int(round((axis_max - axis_min) / step_t)))
-            t_dec    = 0 if step_t >= 1 else 1
+            n_ticks = max(1, int(round((axis_max - axis_min) / step_t)))
+            t_dec = 0 if step_t >= 1 else 1
 
             # --- Regenachse: gerundete Obergrenze, aber mind. 1 mm, damit
             #     Nieselregen klein dargestellt wird (statt voller Säulenhöhe). ---
@@ -639,7 +701,10 @@ class WeatherPickerTool(QgsMapTool):
 
             # --- Wert→Pixel-Hilfsfunktionen (Y-Achsen) ---
             def yt(v):
-                return plot_bottom - (v - axis_min) / (axis_max - axis_min) * plot_h
+                return (
+                    plot_bottom -
+                    (v - axis_min) / (axis_max - axis_min) * plot_h
+                )
 
             def yr(v):
                 return plot_bottom - (v / axis_max_r) * plot_h
@@ -665,21 +730,35 @@ class WeatherPickerTool(QgsMapTool):
                 _total_s = (tdts[-1] - _t0).total_seconds()
 
                 def x_at_time(t):
-                    return margin_left + (t - _t0).total_seconds() / _total_s * plot_w
+                    return (
+                        margin_left +
+                        (t - _t0).total_seconds() / _total_s * plot_w
+                    )
 
                 xs = [x_at_time(td) for td in tdts]
             else:
+
                 def x_at_time(_t):
                     return None
 
-                xs = [margin_left + i * plot_w / max(n - 1, 1) for i in range(n)]
+                xs = [
+                    margin_left + i * plot_w / max(n - 1, 1) for i in range(n)
+                ]
 
             # Pixel-X des aktuellen Zeitpunkts ermitteln. Mit Zeitachse direkt aus
             # der Zeit; sonst robust über Zeitstempel-Interpolation auf die xs.
             now_x = None
-            if now_local is not None and use_time_axis and tdts[0] <= now_local <= tdts[-1]:
+            if (
+                now_local is not None and
+                use_time_axis and
+                tdts[0] <= now_local <= tdts[-1]
+            ):
                 now_x = x_at_time(now_local)
-            elif now_local is not None and tdts and tdts[0] <= now_local <= tdts[-1]:
+            elif (
+                now_local is not None and
+                tdts and
+                tdts[0] <= now_local <= tdts[-1]
+            ):
                 for k in range(len(tdts) - 1):
                     if tdts[k] <= now_local <= tdts[k + 1]:
                         span = (tdts[k + 1] - tdts[k]).total_seconds() or 1.0
@@ -693,18 +772,26 @@ class WeatherPickerTool(QgsMapTool):
             painter.drawText(
                 QtCore.QRect(0, 14, width, 26),
                 QtCore.Qt.AlignCenter,
-                tr("chart_title", lang)
+                tr("chart_title", lang),
             )
             set_font(10)
             painter.setPen(QtGui.QPen(C_MUTE))
             # Mit gefundenem Ort: "… – in der Nähe von <Ort>", sonst nur Koordinaten.
             if place:
-                subtitle = tr("coords_near", lang,
-                              lat=_fmt_num(lat, 4, lang),
-                              lon=_fmt_num(lon, 4, lang), place=place)
+                subtitle = tr(
+                    "coords_near",
+                    lang,
+                    lat=_fmt_num(lat, 4, lang),
+                    lon=_fmt_num(lon, 4, lang),
+                    place=place,
+                )
             else:
-                subtitle = tr("coords", lang,
-                              lat=_fmt_num(lat, 4, lang), lon=_fmt_num(lon, 4, lang))
+                subtitle = tr(
+                    "coords",
+                    lang,
+                    lat=_fmt_num(lat, 4, lang),
+                    lon=_fmt_num(lon, 4, lang),
+                )
             painter.drawText(
                 QtCore.QRect(0, 42, width, 18),
                 QtCore.Qt.AlignCenter,
@@ -714,18 +801,22 @@ class WeatherPickerTool(QgsMapTool):
             # --- Vergangenheit dezent schattieren (links der "Jetzt"-Linie) ---
             if now_x is not None:
                 painter.fillRect(
-                    int(margin_left), int(margin_top),
-                    int(now_x - margin_left), int(plot_h),
-                    C_PAST
+                    int(margin_left),
+                    int(margin_top),
+                    int(now_x - margin_left),
+                    int(plot_h),
+                    C_PAST,
                 )
 
             # --- Horizontale Gitterlinien + Y-Achsen-Beschriftung ---
             for i in range(n_ticks + 1):
-                frac  = i / n_ticks
+                frac = i / n_ticks
                 y_pos = int(plot_bottom - frac * plot_h)
 
                 painter.setPen(QtGui.QPen(C_GRID, 1, QtCore.Qt.SolidLine))
-                painter.drawLine(margin_left, y_pos, margin_left + plot_w, y_pos)
+                painter.drawLine(
+                    margin_left, y_pos, margin_left + plot_w, y_pos
+                )
 
                 # Beschriftung links (Temperatur) – Dezimaltrenner nach Sprache
                 t_val = axis_min + i * step_t
@@ -734,16 +825,21 @@ class WeatherPickerTool(QgsMapTool):
                 painter.drawText(
                     QtCore.QRect(0, y_pos - 9, margin_left - 8, 18),
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter,
-                    f"{_fmt_num(t_val, t_dec, lang)}°"
+                    f"{_fmt_num(t_val, t_dec, lang)}°",
                 )
 
                 # Beschriftung rechts (Regen)
                 r_val = frac * axis_max_r
                 painter.setPen(QtGui.QPen(C_RAIN_INK, 1))
                 painter.drawText(
-                    QtCore.QRect(margin_left + plot_w + 8, y_pos - 9, margin_right - 10, 18),
+                    QtCore.QRect(
+                        margin_left + plot_w + 8,
+                        y_pos - 9,
+                        margin_right - 10,
+                        18,
+                    ),
                     QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
-                    _fmt_num(r_val, r_dec, lang)
+                    _fmt_num(r_val, r_dec, lang),
                 )
 
             # --- Vertikale Tageslinien + Datums-Beschriftung ---
@@ -751,22 +847,28 @@ class WeatherPickerTool(QgsMapTool):
             if use_time_axis:
                 # Eine Linie an jedem lokalen Mitternacht – zeitlich korrekt, auch
                 # wenn einzelne Stunden herausgefiltert wurden.
-                day = tdts[0].replace(hour=0, minute=0, second=0, microsecond=0)
+                day = tdts[0].replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
                 while day <= tdts[-1]:
                     if day >= tdts[0]:
                         x_pos = int(x_at_time(day))
 
-                        painter.setPen(QtGui.QPen(C_GRID, 1, QtCore.Qt.SolidLine))
+                        painter.setPen(
+                            QtGui.QPen(C_GRID, 1, QtCore.Qt.SolidLine)
+                        )
                         painter.drawLine(x_pos, margin_top, x_pos, plot_bottom)
 
                         painter.setPen(QtGui.QPen(C_AXIS, 1))
-                        painter.drawLine(x_pos, plot_bottom, x_pos, plot_bottom + 5)
+                        painter.drawLine(
+                            x_pos, plot_bottom, x_pos, plot_bottom + 5
+                        )
 
                         painter.setPen(QtGui.QPen(C_MUTE, 1))
                         painter.drawText(
                             QtCore.QRect(x_pos - 48, plot_bottom + 7, 96, 16),
                             QtCore.Qt.AlignCenter,
-                            _format_date_label(day, lang)
+                            _format_date_label(day, lang),
                         )
                     day += datetime.timedelta(days=1)
             else:
@@ -778,7 +880,9 @@ class WeatherPickerTool(QgsMapTool):
                     painter.drawLine(x_pos, margin_top, x_pos, plot_bottom)
 
                     painter.setPen(QtGui.QPen(C_AXIS, 1))
-                    painter.drawLine(x_pos, plot_bottom, x_pos, plot_bottom + 5)
+                    painter.drawLine(
+                        x_pos, plot_bottom, x_pos, plot_bottom + 5
+                    )
 
                     if i < len(tdts):
                         date_lbl = _format_date_label(tdts[i], lang)
@@ -790,14 +894,21 @@ class WeatherPickerTool(QgsMapTool):
                     painter.drawText(
                         QtCore.QRect(x_pos - 48, plot_bottom + 7, 96, 16),
                         QtCore.Qt.AlignCenter,
-                        date_lbl
+                        date_lbl,
                     )
 
             # --- Achsenlinien (links / rechts / unten), kein harter Vollrahmen ---
             painter.setPen(QtGui.QPen(C_AXIS, 1))
             painter.drawLine(margin_left, margin_top, margin_left, plot_bottom)
-            painter.drawLine(margin_left + plot_w, margin_top, margin_left + plot_w, plot_bottom)
-            painter.drawLine(margin_left, plot_bottom, margin_left + plot_w, plot_bottom)
+            painter.drawLine(
+                margin_left + plot_w,
+                margin_top,
+                margin_left + plot_w,
+                plot_bottom,
+            )
+            painter.drawLine(
+                margin_left, plot_bottom, margin_left + plot_w, plot_bottom
+            )
 
             # --- Datenbereich beschneiden, damit Bézier-Überschwinger/Balken
             #     nicht über die Achsen hinausragen ---
@@ -827,10 +938,14 @@ class WeatherPickerTool(QgsMapTool):
                     p2 = points[j + 1]
                     p3 = points[j + 2] if j + 2 < m else points[j + 1]
                     # Catmull-Rom-Tangenten (Tension 1/6) als Bézier-Kontrollpunkte
-                    c1 = QtCore.QPointF(p1.x() + (p2.x() - p0.x()) / 6.0,
-                                        p1.y() + (p2.y() - p0.y()) / 6.0)
-                    c2 = QtCore.QPointF(p2.x() - (p3.x() - p1.x()) / 6.0,
-                                        p2.y() - (p3.y() - p1.y()) / 6.0)
+                    c1 = QtCore.QPointF(
+                        p1.x() + (p2.x() - p0.x()) / 6.0,
+                        p1.y() + (p2.y() - p0.y()) / 6.0,
+                    )
+                    c2 = QtCore.QPointF(
+                        p2.x() - (p3.x() - p1.x()) / 6.0,
+                        p2.y() - (p3.y() - p1.y()) / 6.0,
+                    )
                     path.cubicTo(c1, c2, p2)
                 return path
 
@@ -845,7 +960,9 @@ class WeatherPickerTool(QgsMapTool):
             fill_path.lineTo(QtCore.QPointF(pts[-1].x(), plot_bottom))
             fill_path.closeSubpath()
 
-            grad = QtGui.QLinearGradient(0.0, float(margin_top), 0.0, float(plot_bottom))
+            grad = QtGui.QLinearGradient(
+                0.0, float(margin_top), 0.0, float(plot_bottom)
+            )
             grad.setColorAt(0.0, QtGui.QColor(228, 87, 46, 110))
             grad.setColorAt(1.0, QtGui.QColor(228, 87, 46, 0))
             painter.fillPath(fill_path, QtGui.QBrush(grad))
@@ -871,7 +988,7 @@ class WeatherPickerTool(QgsMapTool):
                 painter.drawText(
                     QtCore.QRect(nx - 30, margin_top - 16, 60, 14),
                     QtCore.Qt.AlignCenter,
-                    tr("now", lang)
+                    tr("now", lang),
                 )
 
             # --- Achsentitel (vertikal) ---
@@ -880,23 +997,31 @@ class WeatherPickerTool(QgsMapTool):
             painter.save()
             painter.translate(20, margin_top + plot_h / 2)
             painter.rotate(-90)
-            painter.drawText(QtCore.QRect(-110, -16, 220, 30), QtCore.Qt.AlignCenter,
-                             tr("temp_axis", lang))
+            painter.drawText(
+                QtCore.QRect(-110, -16, 220, 30),
+                QtCore.Qt.AlignCenter,
+                tr("temp_axis", lang),
+            )
             painter.restore()
 
             painter.setPen(QtGui.QPen(C_RAIN_INK))
             painter.save()
             painter.translate(width - 18, margin_top + plot_h / 2)
             painter.rotate(90)
-            painter.drawText(QtCore.QRect(-110, -16, 220, 30), QtCore.Qt.AlignCenter,
-                             tr("rain_axis", lang))
+            painter.drawText(
+                QtCore.QRect(-110, -16, 220, 30),
+                QtCore.Qt.AlignCenter,
+                tr("rain_axis", lang),
+            )
             painter.restore()
 
             # --- Legende (oben rechts, mit halbtransparentem Hintergrund) ---
             leg_w, leg_h = 250, 24
             leg_x = margin_left + plot_w - leg_w
             leg_y = margin_top + 8
-            painter.fillRect(leg_x, leg_y, leg_w, leg_h, QtGui.QColor(255, 255, 255, 215))
+            painter.fillRect(
+                leg_x, leg_y, leg_w, leg_h, QtGui.QColor(255, 255, 255, 215)
+            )
             cy = leg_y + leg_h // 2
 
             set_font(10)
@@ -926,8 +1051,10 @@ class WeatherPickerTool(QgsMapTool):
         lang = _current_lang()
         _log(tr("log_release", lang))
 
-        p         = event.position() if hasattr(event, "position") else event.pos()
-        map_point = self.canvas.getCoordinateTransform().toMapPoint(int(p.x()), int(p.y()))
+        p = event.position() if hasattr(event, "position") else event.pos()
+        map_point = self.canvas.getCoordinateTransform().toMapPoint(
+            int(p.x()), int(p.y())
+        )
 
         try:
             src = QgsProject.instance().crs()
@@ -935,7 +1062,7 @@ class WeatherPickerTool(QgsMapTool):
             if not src.isValid() or not dst.isValid():
                 raise RuntimeError(tr("err_crs", lang))
 
-            ct  = QgsCoordinateTransform(src, dst, QgsProject.instance())
+            ct = QgsCoordinateTransform(src, dst, QgsProject.instance())
             wgs = ct.transform(map_point)
 
             lat, lon = wgs.y(), wgs.x()
@@ -954,8 +1081,8 @@ class WeatherPickerTool(QgsMapTool):
 
             # Lokale "Jetzt"-Zeit am Ort = aktuelle UTC + utc_offset_seconds.
             now_local = (
-                datetime.datetime.now(datetime.timezone.utc)
-                + datetime.timedelta(seconds=utc_offset)
+                datetime.datetime.now(datetime.timezone.utc) +
+                datetime.timedelta(seconds=utc_offset)
             ).replace(tzinfo=None)
 
             # In Geräteauflösung rendern → 1:1 anzeigen, kein unscharfer Downscale.
@@ -965,7 +1092,15 @@ class WeatherPickerTool(QgsMapTool):
                 dpr = 1.0
 
             img = self.create_png(
-                lat, lon, t, temp, rain, now_local, scale=dpr, lang=lang, place=place
+                lat,
+                lon,
+                t,
+                temp,
+                rain,
+                now_local,
+                scale=dpr,
+                lang=lang,
+                place=place,
             )
             pixmap = QtGui.QPixmap.fromImage(img)
             pixmap.setDevicePixelRatio(dpr)
@@ -991,7 +1126,9 @@ class WeatherPickerTool(QgsMapTool):
             quellen = [tr("source", lang)]
             if place:
                 quellen.append(tr("source_osm", lang))
-            label_src = QtWidgets.QLabel("&nbsp;&nbsp;·&nbsp;&nbsp;".join(quellen))
+            label_src = QtWidgets.QLabel(
+                "&nbsp;&nbsp;·&nbsp;&nbsp;".join(quellen)
+            )
             label_src.setOpenExternalLinks(True)
             label_src.setAlignment(QtCore.Qt.AlignCenter)
             layout.addWidget(label_src)
@@ -1007,5 +1144,8 @@ class WeatherPickerTool(QgsMapTool):
 
         except Exception as e:
             import traceback
+
             _log(traceback.format_exc(), level=Qgis.Critical)
-            QtWidgets.QMessageBox.critical(self.iface.mainWindow(), "Weather Picker", str(e))
+            QtWidgets.QMessageBox.critical(
+                self.iface.mainWindow(), "Weather Picker", str(e)
+            )
