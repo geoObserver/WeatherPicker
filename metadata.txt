@@ -6,14 +6,18 @@
 
 # --- Pflichtfelder ---------------------------------------------------------
 name=Weather Picker
-qgisMinimumVersion=3.16
+# qgisMinimumVersion 3.22: der Code nutzt durchgängig `from __future__ import
+# annotations`, `datetime.fromisoformat` und scoped Qt-Enums. Ein 3.16-era-Stack
+# (Python 3.6, PyQt5 5.10) hätte damit ohnehin nie funktioniert – die bisherige
+# Angabe 3.16 war also schon vorher zu optimistisch.
+qgisMinimumVersion=3.22
 description=Auf die Karte klicken und Wetterdaten inkl. 7-Tage-Vorschau (Open-Meteo) als Diagramm anzeigen. / Click the map to show weather data incl. 7-day forecast (Open-Meteo) as a chart.
-version=0.5.2
+version=0.8.1
 author=Mike Elstermann (#geoObserver), Thomas Wölk
 email=news@geoobserver.de
-about=Einfache Wetterauskunft inkl. 7-Tage-Vorschau für die angeklickte Koordinate. Temperatur- und Regenverlauf werden als Diagramm dargestellt. Zusätzlich wird der nächstgelegene Ort eingeblendet ("in der Nähe von ..."), ermittelt per Reverse-Geocoding über Nominatim/OpenStreetMap. Die Oberfläche folgt automatisch der QGIS-Sprache (Deutsch/Englisch), inkl. lokalisierter Datums- und Zahlenformate. Die Wetterdaten stammen von der Open-Meteo-API (https://open-meteo.com, Daten unter CC BY 4.0), die Ortsnamen von OpenStreetMap (Nominatim, Daten unter ODbL). Der Netzwerkabruf läuft über den QGIS-Netzwerk-Manager und berücksichtigt damit die in QGIS hinterlegten Proxy-Einstellungen. Hinweis: Beim Klick werden die Koordinaten an Open-Meteo und Nominatim übertragen; der kostenlose Open-Meteo-Endpoint ist laut Nutzungsbedingungen für nichtkommerzielle Nutzung vorgesehen, die öffentliche Nominatim-Instanz für moderate Nutzung (max. 1 Anfrage/Sekunde).
+about=Einfache Wetterauskunft inkl. 7-Tage-Vorschau für die angeklickte Koordinate. Temperatur- und Niederschlagsverlauf (inkl. Schnee und Schauer) werden als Diagramm dargestellt, ergänzt um die Ist-Temperatur als große Zahl im Kopf, ein gleitendes 24-Stunden-Tagesmittel als Trendlinie, einen Tagesstreifen mit Temperaturspanne und Niederschlagssumme je Tag sowie den ab „jetzt" kumulierten Niederschlag. Zusätzlich wird der nächstgelegene Ort eingeblendet ("in der Nähe von ..."), ermittelt per Reverse-Geocoding über Nominatim/OpenStreetMap, und am zuletzt abgefragten Punkt ein Marker auf der Karte gesetzt. Das Diagramm lässt sich per Mausrad zoomen und per Ziehen verschieben, wobei je nach Zoomstufe Uhrzeiten am Zeitstrahl erscheinen; Trendlinie und kumulierte Summe sind einzeln abschaltbar; die Quellenangabe (Open-Meteo CC BY 4.0, OSM/Nominatim) wird direkt ins exportierte PNG gezeichnet. Die Oberfläche folgt automatisch der QGIS-Sprache (Deutsch/Englisch), inkl. lokalisierter Datums- und Zahlenformate. Die Wetterdaten stammen von der Open-Meteo-API (https://open-meteo.com, Daten unter CC BY 4.0), die Ortsnamen von OpenStreetMap (Nominatim, Daten unter ODbL). Der Netzwerkabruf läuft über den QGIS-Netzwerk-Manager und berücksichtigt damit die in QGIS hinterlegten Proxy-Einstellungen. Hinweis: Beim Klick werden die Koordinaten an Open-Meteo und Nominatim übertragen; der kostenlose Open-Meteo-Endpoint ist laut Nutzungsbedingungen für nichtkommerzielle Nutzung vorgesehen, die öffentliche Nominatim-Instanz für moderate Nutzung (max. 1 Anfrage/Sekunde), die das Plugin selbst einhält. Der GeoTIFF-Export braucht die GDAL-Python-Anbindung der QGIS-Installation (Modul osgeo); alle anderen Formate kommen ohne sie aus. / GeoTIFF export needs the GDAL Python bindings of the QGIS installation (module osgeo); every other format works without them.
     -------------------------
-    Simple weather information including a 7-day forecast for the clicked location. Temperature and rainfall are rendered as a chart. It also shows the nearest place ("near ...") via reverse geocoding through Nominatim/OpenStreetMap. The interface follows the QGIS UI language automatically (German/English), including localized date and number formats. Weather data is provided by the Open-Meteo API (https://open-meteo.com, data under CC BY 4.0), place names by OpenStreetMap (Nominatim, data under ODbL). Network requests go through the QGIS network manager and therefore honour the proxy settings configured in QGIS. Note: clicking sends the coordinates to Open-Meteo and Nominatim; per the Open-Meteo terms the free endpoint is intended for non-commercial use, and the public Nominatim instance is meant for moderate use (max. 1 request/second).
+    Simple weather information including a 7-day forecast for the clicked location. Temperature and precipitation (incl. snow and showers) are rendered as a chart, complemented by the current temperature as a large headline figure, a 24-hour moving average trend line, a per-day strip with temperature range and precipitation sum, and cumulative precipitation from "now" onward. It also shows the nearest place ("near ...") via reverse geocoding through Nominatim/OpenStreetMap, and marks the last queried point on the map. The chart can be zoomed with the mouse wheel and panned by dragging, revealing time-of-day labels as you zoom in; the trend line and the cumulative sum can each be switched off; the attribution (Open-Meteo CC BY 4.0, OSM/Nominatim) is drawn directly into the exported PNG. The interface follows the QGIS UI language automatically (German/English), including localized date and number formats. Weather data is provided by the Open-Meteo API (https://open-meteo.com, data under CC BY 4.0), place names by OpenStreetMap (Nominatim, data under ODbL). Network requests go through the QGIS network manager and therefore honour the proxy settings configured in QGIS. Note: clicking sends the coordinates to Open-Meteo and Nominatim; per the Open-Meteo terms the free endpoint is intended for non-commercial use, and the public Nominatim instance is meant for moderate use (max. 1 request/second), which the plugin itself observes.
 repository=https://github.com/geoObserver/WeatherPicker
 
 # --- Empfohlene Felder -----------------------------------------------------
@@ -22,15 +26,87 @@ homepage=https://geoobserver.de/qgis-plugin-weather-picker/
 tracker=https://github.com/geoObserver/WeatherPicker/issues
 category=Web
 icon=logo.png
-tags=weather,forecast,picker,open-meteo,temperature,rain,wetter,vorhersage,i18n
+tags=weather,forecast,picker,open-meteo,temperature,rain,wetter,vorhersage,i18n,search,settings,geotiff,export,processing,batch,temporal,chart,georeferencing
 
 experimental=False
 deprecated=False
 server=False
-hasProcessingProvider=False
+# "yes" ist die Schreibweise, die QGIS auswertet; mit "True" blieb die
+# Angabe wirkungslos. Wirksam verlangt sie eine initProcessing()-Methode
+# am Plugin - ohne die laedt QGIS das Plugin nicht mehr.
+hasProcessingProvider=yes
 
-changelog=0.5.2 - more flake8 compatible
-    0.5.1 - flake8 compatibel
+changelog=0.8.1 - Befunde der Sicherheitsprüfung des Plugin-Repos behoben: Der Übersetzungsschlüssel des API-Schlüssel-Felds heißt jetzt anders, weil schon der alte Name als mögliches Geheimnis galt; gespeicherte API-Schlüssel bleiben erhalten. Der Rückfall ohne Karte beim GeoTIFF-Export fängt nur noch die erwarteten Fehler ab, unerwartete erscheinen jetzt als Meldung.
+    / 0.8.1 - Fixed the findings of the plugin repository security check: the translation key of the API key field was renamed, because its old name alone counted as a potential secret; stored API keys are kept. The no-map fallback of the GeoTIFF export now only catches the expected errors, unexpected ones are now reported.
+    0.8 - Bedienung: Ort suchen, Punkte sammeln und Einstellungen liegen jetzt im Ausklappmenü des Weather-Picker-Knopfs statt als drei eigene Knöpfe in der Werkzeugleiste. Die Suche trägt eine schlichte Lupe statt des Hineinzoomen-Symbols, das Sammeln ein Aufnahme-Symbol; die Menüeinträge wiederholen den Plugin-Namen nicht mehr.
+    Export: „Als GeoTIFF speichern und in die Karte laden" schreibt bei ungespeichertem Projekt ohne Rückfrage in den Temp-Ordner des Betriebssystems; bei gespeichertem Projekt öffnet der Dialog im Projektordner. Achtung: Unter Windows kann QGIS abstürzen, wenn ein Projekt mit Layern aus dem Temp-Ordner verworfen wird.
+    / 0.8 - Interaction: Search place, Collect points and Settings now live in the drop-down menu of the Weather Picker button instead of three separate toolbar buttons. Search uses a plain magnifier instead of the zoom-in icon, collecting a record icon; the menu entries no longer repeat the plugin name.
+    Export: "Save as GeoTIFF and load into the map" writes straight into the operating system's temp folder without a dialog while the project is unsaved; with a saved project the dialog opens in the project folder. Caution: on Windows, QGIS can crash when a project holding layers from the temp folder is discarded.
+    0.7 - Grosse Erweiterung: Niederschlag statt Regen, neue Diagramm-Elemente, fuenf Exportformate, Diagramme auf der Karte und ein Processing-Algorithmus fuer ganze Punkt-Layer.
+    Daten: Stundenwerte kommen jetzt ueber hourly=precipitation und enthalten damit auch Schnee und Schauer - eine Verhaltensaenderung gegenueber 0.6, die an Wintertagen deutlich andere Summen ergibt.
+    Diagramm: Ist-Temperatur als grosse Zahl im Kopf, Ortsname darueber, Koordinaten und Einheit klein darunter.
+    Diagramm: gleitendes 24-Stunden-Tagesmittel als zweite Trendlinie, berechnet nach der Trapezregel, damit der Tagesgang verschwindet.
+    Diagramm: feines unbeschriftetes Zwischengitter, je Tag eine Mittagslinie und eine Null-Grad-Linie, sobald die Temperaturachse den Gefrierpunkt kreuzt.
+    Diagramm: Tagesstreifen unter der Datumsachse mit Temperaturspanne und Niederschlagssumme je Tag, auch fuer einen am Rand angeschnittenen Tag - entscheidend ist dessen Tagesmitte.
+    Diagramm: kumulierter Niederschlag ab jetzt als gestrichelte Treppenlinie mit eigener Skalierung; ihr Endwert steht freigestellt auf der Linie.
+    Diagramm: 24-Stunden-Mittel und kumulierte Summe lassen sich einzeln abschalten, der Zustand wird gemerkt.
+    Diagramm: Legende unterhalb des Bildes, rechtsbuendig; Jetzt-Markierung parallel zur Linie gedreht; Windstaerke zusaetzlich in Beaufort.
+    Diagramm: beide Skalen tragen die Einheit an jedem Teilstrich, die Achsentitel dafuer nicht mehr; die Kopfzeilen verkleinern ihre Schrift, wenn der Inhalt sonst aus dem Bild liefe.
+    Bedienung: Zeitraum per Mausrad am Cursor zoomen und per Ziehen verschieben, Escape stellt die Gesamtansicht her; beim Hineinzoomen erscheinen Uhrzeiten am Zeitstrahl, mit der Zoomstufe feiner.
+    Bedienung: Klick-Marker auf der Karte am zuletzt abgefragten Punkt; die Bereichsangabe im Kopf nennt Jahr und im Deutschen Uhr.
+    Export: neben PNG jetzt auch SVG, PDF, CSV und GeoTIFF; der Speichern-Knopf klappt die Formate direkt auf, die CSV enthaelt die Reihen hinter dem Bild.
+    Export: das GeoTIFF ist am Abfragepunkt georeferenziert und laesst sich auf Wunsch gleich als Rasterlayer laden; die Bodenbreite folgt dem Kartenausschnitt, bei geografischem Karten-CRS weicht der Export auf die passende UTM-Zone aus.
+    Export: das GeoTIFF entsteht in 300 dpi (4000 x 2231 Pixel) statt in Bildschirmdichte, mit gesetzten TIFF-Aufloesungs-Tags; die Georeferenz bleibt unveraendert, nur das Raster wird feiner.
+    Export: Layer- und Dateiname tragen die Abrufzeit, sodass eine zweite Vorhersage derselben Stelle die erste weder ueberschreibt noch gleich heisst.
+    Export: die Quellenangabe wird in jede Grafik gezeichnet - PNG, SVG, PDF und GeoTIFF.
+    Karte: jeder gesammelte Punkt kann sein Diagramm als Kartensymbol tragen, in fester Groesse in Millimetern und damit in jeder Zoomstufe lesbar; abschaltbar in den Einstellungen.
+    Karte: Maus ueber einen gesammelten Punkt zeigt sein Diagramm als Sprechblase, die Layer-Aktion Diagramm oeffnen holt das PNG ins Standardprogramm.
+    Karte: ein Aufraeumen-Knopf in den Einstellungen loescht Diagramme, auf die kein Punkt mehr zeigt; die Rueckfrage nennt die Zahl vorab.
+    Stapelverarbeitung: neuer Processing-Algorithmus Wetter fuer Punkte fragt einen ganzen Punkt-Layer ab, nutzbar in der Werkzeugkiste, im Modellbauer und aus dem Skript; ein fehlgeschlagener Abruf bricht den Lauf nicht ab, sondern wird am Ende gezaehlt.
+    Stapelverarbeitung: optional ein zweiter Ausgabe-Layer mit einer Zeile je Punkt und Stunde, dessen Zeitfeld fuer den Temporal-Controller gesetzt ist.
+    Korrektur: die Sprechblase bleibt leer, wenn zu einem Punkt kein Diagramm hinterlegt ist, statt ein Kaputtes-Bild-Zeichen zu zeigen; die Korrektur erreicht auch Sammel-Layer aus aelteren Projekten, laesst eine selbst geaenderte Vorlage aber unberuehrt.
+    Korrektur: der Speichern-Knopf reichte den Gedrueckt-Zustand des Signals als Formatangabe weiter und war dadurch wirkungslos - nur die Menueeintraege funktionierten.
+    Korrektur: ein fehlgeschlagener GeoTIFF-Export entfernt nicht mehr den bereits geladenen Rasterlayer; geschrieben wird zuerst daneben, umbenannt wird erst nach Erfolg.
+    Korrektur: fehlt die GDAL-Anbindung, nennt die Meldung das beim Namen und weist darauf hin, dass die uebrigen Formate weiterhin funktionieren.
+    Korrektur: der Kartenklick nutzt nicht mehr das veraltete QgsMapToPixel.toMapPoint, das bei jedem Klick eine Warnung ins Protokoll schrieb.
+    Korrektur: Diagramm-Dateinamen verstuemmelten den Zeitstempel, wenn eine Vorzeichen-Ersetzung fuer Suedhalbkugel-Koordinaten griff.
+    Intern: die Zeichenroutine trennt Datenaufbereitung und Malen, sodass SVG und PDF ohne eigenen Zeichencode auskommen; neue Module export.py, georef.py und processing_provider.py.
+    Intern: Bildgroesse auf 1280x714 angepasst, qgisMinimumVersion auf 3.22 angehoben, Nominatim-Anfragen halten den Mindestabstand von einer Sekunde aktiv ein.
+    Stapelverarbeitung: der Algorithmus steht auch ohne geoeffnetes QGIS bereit, etwa unter qgis_process; das Plugin meldet seinen Provider dafuer unabhaengig von der Oberflaeche an.
+    Intern: die Testsuite deckt jetzt auch Export, Georeferenzierung, Processing und das Ergebnisfenster ab und laeuft auf dem Offscreen-Bildschirm.
+    / 0.7 - Major update: precipitation instead of rain, new chart elements, five export formats, charts on the map and a Processing algorithm for whole point layers.
+    Data: hourly values now come from hourly=precipitation and therefore include snow and showers - a behaviour change against 0.6 that yields noticeably different sums on winter days.
+    Chart: current temperature as a large headline figure, place name above, coordinates and unit below.
+    Chart: 24-hour moving average as a second trend line, computed with the trapezoidal rule so the daily cycle disappears.
+    Chart: fine unlabeled grid, a midday line per day and a freezing-point line whenever the temperature axis crosses zero.
+    Chart: day strip below the date axis with temperature range and precipitation sum per day, including a day cut off at the edge of the view - its midday decides.
+    Chart: cumulative precipitation from now on as a dashed step line with its own scale; its end value sits on the line, knocked out of it.
+    Chart: the 24-hour mean and the cumulative sum can each be switched off, and the choice is remembered.
+    Chart: legend below the image, right-aligned; now marker rotated parallel to the line; wind force additionally in Beaufort.
+    Chart: both scales carry the unit on every tick instead of in the axis title; header lines shrink their font when the content would otherwise overflow.
+    Interaction: zoom the time range with the mouse wheel at the cursor and pan by dragging, Escape restores the full view; zooming in reveals time-of-day labels that get finer with the zoom level.
+    Interaction: a click marker on the map at the last queried point; the range in the header now carries the year.
+    Export: SVG, PDF, CSV and GeoTIFF alongside PNG; the save button drops down to the formats directly, the CSV holds the series behind the picture.
+    Export: the GeoTIFF is georeferenced at the query point and can be loaded as a raster layer right away; ground width follows the map extent, and with a geographic map CRS the export falls back to the matching UTM zone.
+    Export: the GeoTIFF renders at 300 dpi (4000 x 2231 pixels) instead of screen density, with TIFF resolution tags set; georeferencing is unchanged, only the raster gets finer.
+    Export: layer and file names carry the query time, so a second forecast of the same spot neither overwrites nor shadows the first.
+    Export: the attribution is drawn into every graphic - PNG, SVG, PDF and GeoTIFF.
+    Map: every collected point can carry its chart as a map symbol at a fixed size in millimetres, readable at any zoom level; can be switched off in the settings.
+    Map: hovering a collected point shows its chart as a map tip, and the layer action Open chart opens the PNG in the default viewer.
+    Map: a clean-up button in the settings deletes charts no point refers to any more; the confirmation states the count up front.
+    Batch: a new Processing algorithm Weather for points queries a whole point layer from the toolbox, the model designer and scripts; a failed fetch does not abort the run, it is counted at the end.
+    Batch: optionally a second output layer with one row per point and hour, its time field configured for the Temporal Controller.
+    Fix: the map tip stays empty when a point has no chart instead of showing a broken-image icon; the fix also reaches collection layers from older projects while leaving a hand-edited template alone.
+    Fix: the save button passed the signal's checked state on as the format and was therefore inert - only the menu entries worked.
+    Fix: a failed GeoTIFF export no longer removes the raster layer already loaded; the file is written next to the target and renamed only on success.
+    Fix: when the GDAL bindings are missing, the message says so and points out that the other formats still work.
+    Fix: map clicks no longer use the deprecated QgsMapToPixel.toMapPoint, which logged a warning on every click.
+    Fix: chart file names mangled the timestamp when a sign replacement for southern-hemisphere coordinates kicked in.
+    Internals: the drawing code separates data preparation from painting, so SVG and PDF need no drawing code of their own; new modules export.py, georef.py and processing_provider.py.
+    Internals: image size adjusted to 1280x714, qgisMinimumVersion raised to 3.22, Nominatim requests actively keep the one-second spacing.
+    Batch: the algorithm is available without a running QGIS desktop, for example under qgis_process; the plugin registers its provider independently of the user interface.
+    Internals: the test suite now covers export, georeferencing, Processing and the result window, and runs on the offscreen platform.
+    0.6 - Nicht-blockierender Abruf (QgsTask, GUI friert nicht mehr ein); Ergebnis in einem wiederverwendeten, nicht-modalen Fenster (schnelles Durchklicken, kein Modal-Stau); Diagramm als PNG speichern bzw. in die Zwischenablage; aktuelle Bedingungen + heutige Tageswerte (gefühlt/Wind/Feuchte/Wettercode, Min/Max, Niederschlag); Ortssuche per Name/Adresse (Forward-Geocoding); konfigurierbarer API-Endpoint/Schlüssel (kommerziell/self-hosted) und Einheiten (°C/°F, mm/inch, km/h …); optionaler Sammel-Layer für angeklickte/gesuchte Punkte. Intern: Aufteilung in Module (i18n/chart/api/settings/options/window/points_layer), Übersetzungen in locales/*.json, scoped Qt-Enums (Qt5/Qt6), pytest-Tests + GitHub-CI. / Non-blocking fetch (QgsTask), reusable non-modal result window, PNG/clipboard export, current conditions + daily summary, place search, configurable endpoint/key/units, optional point-collection layer; modular refactor, JSON translation catalogs, scoped Qt enums, tests + CI.
     0.5 - Nächster Ort zur Koordinate: Reverse-Geocoding über Nominatim/OpenStreetMap blendet "in der Nähe von ..." im Diagramm ein. Läuft wie der Wetterabruf über den QGIS-Netzwerk-Manager (Proxy/Auth), eigener 8-s-Timeout, Ergebnis-Cache pro Position (~100 m), aussagekräftiger User-Agent gemäß Nominatim-Richtlinie. Schlägt das Geocoding fehl, werden weiterhin nur die Koordinaten gezeigt (keine Fehlermeldung). Datenschutz-/Lizenzhinweise (OSM/ODbL) ergänzt. / Nearest place via Nominatim reverse geocoding, shown as "near ..." in the chart; same network path, own timeout and per-location cache, silent fallback to coordinates only.
     0.4 - Sprachunterstützung DE/EN: Texte, Diagramm-Beschriftungen sowie Datums- und Zahlenformate folgen automatisch der QGIS-Oberflächensprache (Wochentag/Reihenfolge aus QLocale, Dezimaltrenner nach Sprache). Robustheits-Fixes: geteilte Toolbar wird beim Entladen nicht mehr zerstört (kein "Toolbar weg nach Reload"), strengere API-Validierung (Typ/NaN/inf, negativer Regen geklemmt), Zeitachse aus echten Zeitstempeln (Lücken korrekt), Wetterabruf ohne Cache (forceRefresh), Koordinaten werden nur gerundet geloggt, Lizenz-/Datenschutzhinweis (CC BY 4.0) ergänzt. / Language support DE/EN following the QGIS UI locale, plus robustness fixes (shared toolbar no longer destroyed on unload, stricter API validation, timestamp-based time axis, uncached fetch, rounded coordinate logging, CC BY 4.0 attribution).
     0.3 - Überarbeitete Robustheit & Darstellung: umschaltbares Werkzeug (Toggle korrekt), Map-Tool wird beim Entladen sauber zurückgesetzt, nur Linksklick löst den Abruf aus. Strukturierte API-Validierung inkl. Filtern von null-Werten. Pixelscharfes HiDPI-Rendering (devicePixelRatio), geglättete Bézier-Temperaturkurve mit Farbverlauf-Fläche, gerundete Achsen, "Jetzt"-Linie und Wochentags-Beschriftung. Netzwerk-Timeout-Timer wird im Erfolgsfall gestoppt. Durchgängig deutsche Beschriftungen, Meldungen und Kommentare.
